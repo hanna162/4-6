@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Start Kids - Premium Lengkap</title>
+    
+    <!-- Font Khas Kanak-Kanak (Fredoka) -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body { 
+            margin: 0; padding: 0; 
+            font-family: 'Fredoka', sans-serif; 
+            background-color: #f0fdf4;
+            background-image: radial-gradient(#cbd5e1 2px, transparent 2px);
+            background-size: 30px 30px;
+        }
+
+        /* Animasi */
+        @keyframes bounce-slow { 0%, 100% { transform: translateY(-5%); } 50% { transform: translateY(5%); } }
+        .animate-bounce-slow { animation: bounce-slow 3s ease-in-out infinite; }
+        
+        @keyframes pop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .animate-pop { animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        
+        @keyframes float-up { 0% { transform: translateY(100vh) rotate(0deg); opacity: 1; } 100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; } }
+        
+        /* Butang 3D Premium */
+        .btn-3d {
+            transition: all 0.1s ease;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.15);
+        }
+        .btn-3d:active {
+            transform: translateY(8px);
+            box-shadow: 0 0px 0 rgba(0,0,0,0.15);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 12px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- SISTEM AUDIO ---
+        const speakText = (text, rate = 0.85) => {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ms-MY';
+            utterance.rate = rate;
+            utterance.pitch = 1.3; 
+            window.speechSynthesis.speak(utterance);
+        };
+
+        // --- DATA PENDIDIKAN KSPK LENGKAP ---
+
+        // Fungsi Penjana Nombor 0-100 Bahasa Melayu
+        const getMalayNumberText = (n) => {
+            if (n === 0) return 'Sifar';
+            if (n === 100) return 'Seratus';
+            const sa = ['', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Lapan', 'Sembilan'];
+            if (n < 10) return sa[n];
+            if (n === 10) return 'Sepuluh';
+            if (n === 11) return 'Sebelas';
+            if (n < 20) return sa[n % 10] + ' belas';
+            const puluh = Math.floor(n / 10);
+            const baki = n % 10;
+            return sa[puluh] + ' puluh' + (baki > 0 ? ' ' + sa[baki] : '');
+        };
+
+        const ALL_NUMBERS = Array.from({ length: 101 }, (_, i) => ({
+            num: i,
+            text: getMalayNumberText(i),
+            countImg: i % 3 === 0 ? '🍎' : i % 2 === 0 ? '⭐' : '🎈'
+        }));
+        
+        // Modul 1: Nama Huruf Standard (A, Bi, Si...) & GAMBAR
+        const LETTER_NAMES = [
+            { l: 'A', name: 'A', w: [{w: 'Ayam', i: '🐔'}, {w: 'Api', i: '🔥'}] },
+            { l: 'B', name: 'Bi', w: [{w: 'Buku', i: '📖'}, {w: 'Bola', i: '⚽'}] },
+            { l: 'C', name: 'Si', w: [{w: 'Cawan', i: '☕'}, {w: 'Cincin', i: '💍'}] },
+            { l: 'D', name: 'Di', w: [{w: 'Dadu', i: '🎲'}, {w: 'Daun', i: '🍃'}] },
+            { l: 'E', name: 'I', w: [{w: 'Epal', i: '🍎'}, {w: 'Emak', i: '👩'}] },
+            { l: 'F', name: 'Ef', w: [{w: 'Feri', i: '⛴️'}, {w: 'Foto', i: '🖼️'}] },
+            { l: 'G', name: 'Ji', w: [{w: 'Gajah', i: '🐘'}, {w: 'Gigi', i: '🦷'}] },
+            { l: 'H', name: 'Hec', w: [{w: 'Hutan', i: '🌲'}, {w: 'Hati', i: '💖'}] },
+            { l: 'I', name: 'Ai', w: [{w: 'Ikan', i: '🐟'}, {w: 'Itik', i: '🦆'}] },
+            { l: 'J', name: 'Je', w: [{w: 'Jari', i: '🖐️'}, {w: 'Jam', i: '⌚'}] },
+            { l: 'K', name: 'Ke', w: [{w: 'Kucing', i: '🐈'}, {w: 'Kasut', i: '👟'}] },
+            { l: 'L', name: 'El', w: [{w: 'Lembu', i: '🐄'}, {w: 'Lilin', i: '🕯️'}] },
+            { l: 'M', name: 'Em', w: [{w: 'Mata', i: '👁️'}, {w: 'Meja', i: '🪑'}] },
+            { l: 'N', name: 'En', w: [{w: 'Nasi', i: '🍚'}, {w: 'Nanas', i: '🍍'}] },
+            { l: 'O', name: 'O', w: [{w: 'Otak', i: '🧠'}, {w: 'Oren', i: '🍊'}] },
+            { l: 'P', name: 'Pi', w: [{w: 'Pokok', i: '🌳'}, {w: 'Pen', i: '🖊️'}] },
+            { l: 'Q', name: 'Kiu', w: [{w: 'Quran', i: '📖'}] },
+            { l: 'R', name: 'Ar', w: [{w: 'Rusa', i: '🦌'}, {w: 'Roti', i: '🍞'}] },
+            { l: 'S', name: 'Es', w: [{w: 'Siput', i: '🐌'}, {w: 'Susu', i: '🥛'}] },
+            { l: 'T', name: 'Ti', w: [{w: 'Topi', i: '🧢'}, {w: 'Tikus', i: '🐁'}] },
+            { l: 'U', name: 'Yu', w: [{w: 'Ular', i: '🐍'}, {w: 'Ubat', i: '💊'}] },
+            { l: 'V', name: 'Vi', w: [{w: 'Van', i: '🚐'}, {w: 'Video', i: '📹'}] },
+            { l: 'W', name: 'Dabliu', w: [{w: 'Wau', i: '🪁'}, {w: 'Wang', i: '💵'}] },
+            { l: 'X', name: 'Eks', w: [{w: 'X-ray', i: '🦴'}] },
+            { l: 'Y', name: 'Wai', w: [{w: 'Yoyo', i: '🪀'}, {w: 'Yu', i: '🦈'}] },
+            { l: 'Z', name: 'Zed', w: [{w: 'Zirafah', i: '🦒'}, {w: 'Zip', i: '🤐'}] }
+        ];
+
+        // Modul 2: Fonik (E-pepet dan E-taling)
+        const PHONICS_DATA = [
+            { l: 'a', sound: 'aah', desc: 'Buka mulut luas' },
+            { l: 'b', sound: 'beh', desc: 'Bibir rapat lalu buka' },
+            { l: 'c', sound: 'ceh', desc: 'Senyum dan sebut' },
+            { l: 'd', sound: 'deh', desc: 'Lidah di lelangit' },
+            { l: 'e', sound: 'eh', desc: 'E-Pepet (Contoh: Emak)' },
+            { l: 'é', sound: 'eh', desc: 'E-Taling (Contoh: Epal)' },
+            { l: 'f', sound: 'feh', desc: 'Gigi atas kena bibir bawah' },
+            { l: 'g', sound: 'geh', desc: 'Dari kerongkong' },
+            { l: 'h', sound: 'heh', desc: 'Hembus nafas' },
+            { l: 'i', sound: 'eee', desc: 'Senyum tarik bibir' },
+            { l: 'j', sound: 'jeh', desc: 'Muncung sikit' },
+            { l: 'k', sound: 'keh', desc: 'Bunyi di kerongkong' },
+            { l: 'l', sound: 'lll', desc: 'Hujung lidah ke atas' },
+            { l: 'm', sound: 'emmm', desc: 'Rapat bibir degung' },
+            { l: 'n', sound: 'ennn', desc: 'Lidah di lelangit' },
+            { l: 'o', sound: 'ohh', desc: 'Bulatkan bibir' },
+            { l: 'p', sound: 'peh', desc: 'Letupkan bibir' },
+            { l: 'r', sound: 'rrr', desc: 'Getarkan lidah' },
+            { l: 's', sound: 'ssss', desc: 'Bunyi ular' },
+            { l: 't', sound: 'teh', desc: 'Letupan lidah' },
+            { l: 'u', sound: 'ooo', desc: 'Muncungkan bibir' }
+        ];
+
+        // Modul 3: Suku Kata & Cerita Pendek (LENGKAP ba - ta)
+        const SYLLABLE_DATA = [
+            { s: 'ba', words: [{w: 'baju', i: '👕'}, {w: 'batu', i: '🪨'}], story: "Ini baju baru bapa. Bapa beli baju biru di kedai." },
+            { s: 'ca', words: [{w: 'cawan', i: '☕'}, {w: 'catur', i: '♟️'}], story: "Cici cuci cawan. Cici minum susu guna cawan merah." },
+            { s: 'da', words: [{w: 'dadu', i: '🎲'}, {w: 'dahan', i: '🌿'}], story: "Didi ada dadu. Didi main dadu bawah dahan pokok." },
+            { s: 'fa', words: [{w: 'fasa', i: '🌙'}, {w: 'feri', i: '⛴️'}], story: "Feri itu besar. Bapa naik feri pada fasa bulan penuh." },
+            { s: 'ga', words: [{w: 'gajah', i: '🐘'}, {w: 'gasing', i: '🌀'}], story: "Gajah itu sangat besar. Gajah suka tengok budak main gasing." },
+            { s: 'ha', words: [{w: 'harimau', i: '🐅'}, {w: 'hati', i: '💖'}], story: "Harimau lari sangat laju. Harimau ada hati yang berani." },
+            { s: 'ja', words: [{w: 'jari', i: '🖐️'}, {w: 'jala', i: '🕸️'}], story: "Jari bapa luka terkena jala. Bapa tangkap ikan guna jala." },
+            { s: 'ka', words: [{w: 'kaki', i: '🦶'}, {w: 'kayu', i: '🪵'}], story: "Kaki kuda sangat kuat. Kuda lompat atas batang kayu." },
+            { s: 'la', words: [{w: 'labu', i: '🎃'}, {w: 'lori', i: '🚛'}], story: "Lori bawa buah labu. Leman suka makan labu manis." },
+            { s: 'ma', words: [{w: 'mata', i: '👁️'}, {w: 'madu', i: '🍯'}], story: "Mata mama sangat cantik. Mama suka minum madu lebah." },
+            { s: 'na', words: [{w: 'nasi', i: '🍚'}, {w: 'naga', i: '🐉'}], story: "Nani makan nasi. Nani baca buku cerita pasal naga." },
+            { s: 'pa', words: [{w: 'paku', i: '📍'}, {w: 'pasu', i: '🏺'}], story: "Pasu bunga papa pecah. Papa baiki meja guna paku." },
+            { s: 'ra', words: [{w: 'raja', i: '👑'}, {w: 'raga', i: '🧺'}], story: "Raja pakai mahkota. Raja letak buah dalam raga rotan." },
+            { s: 'sa', words: [{w: 'satu', i: '1️⃣'}, {w: 'sagu', i: '🥣'}], story: "Sani beli satu mangkuk sagu. Sagu itu manis dan sedap." },
+            { s: 'ta', words: [{w: 'tali', i: '🪢'}, {w: 'topi', i: '🧢'}], story: "Tali topi Tariq sudah putus. Tariq ikat topi guna tali baru." }
+        ];
+
+        const COURSE_DATA = {
+            m1: {
+                id: 'm1', title: 'Kenal ABC', type: 'letter', color: 'bg-rose-400', 
+                content: LETTER_NAMES.map(item => ({ letter: item.l, sound: item.name, words: item.w })),
+                quiz: [
+                    { q: 'Manakah huruf A?', opt: ['B', 'A', 'M'], a: 'A' },
+                    { q: 'Pilih huruf C', opt: ['C', 'G', 'O'], a: 'C' },
+                    { q: 'M untuk apa?', opt: ['Kucing', 'Mata', 'Bola'], a: 'Mata' }
+                ]
+            },
+            m2: {
+                id: 'm2', title: 'Bunyi Fonik', type: 'phonics', color: 'bg-cyan-400', requires: 'm1',
+                content: PHONICS_DATA.map(item => ({ letter: item.l, sound: item.sound, desc: item.desc })),
+                quiz: [
+                    { q: 'Huruf apakah berbunyi "Beh"?', opt: ['A', 'D', 'B'], a: 'B' },
+                    { q: 'Huruf apakah berbunyi "Mmm"?', opt: ['M', 'S', 'K'], a: 'M' },
+                    { q: 'Bunyi "Seh" untuk huruf apa?', opt: ['C', 'Z', 'S'], a: 'S' }
+                ]
+            },
+            m3: {
+                id: 'm3', title: 'Suku Kata & Cerita', type: 'syllable', color: 'bg-amber-400', requires: 'm2',
+                content: SYLLABLE_DATA.map(item => ({ syllable: item.s, words: item.words, story: item.story })),
+                quiz: [
+                    { q: 'Pilih suku kata "ba"', opt: ['ca', 'ba', 'da'], a: 'ba' },
+                    { q: 'Pilih suku kata "ma"', opt: ['ma', 'na', 'la'], a: 'ma' },
+                    { q: 'Gambar 🎃 bermula dengan?', opt: ['ka', 'la', 'sa'], a: 'la' }
+                ]
+            },
+            m4: {
+                id: 'm4', title: 'Kenal Nombor 0-100', type: 'number', color: 'bg-emerald-400', requires: 'm3',
+                content: ALL_NUMBERS,
+                quiz: [
+                    { q: 'Manakah nombor Lapan?', opt: ['2', '8', '9'], a: '8' },
+                    { q: 'Manakah nombor Sepuluh?', opt: ['10', '100', '1'], a: '10' },
+                    { q: 'Manakah nombor Seratus?', opt: ['10', '100', '0'], a: '100' }
+                ]
+            }
+        };
+
+        const MODULE_ORDER = ['m1', 'm2', 'm3', 'm4']; // Modul 4 dikembalikan!
+
+        // --- KOMPONEN PELAJARAN PREMIUM ---
+        const LessonViewer = ({ module, onComplete, onExit }) => {
+            const [phase, setPhase] = useState('grid');
+            const [activeItem, setActiveItem] = useState(null);
+            const [quizScore, setQuizScore] = useState(0);
+            const [quizIndex, setQuizIndex] = useState(0);
+
+            useEffect(() => {
+                if (phase === 'grid') speakText(`Mari belajar ${module.title}. Pilih kad!`);
+                else if (phase === 'quiz') speakText("Mari kita uji minda!");
+                else if (phase === 'result') {
+                    const pass = Math.round((quizScore / module.quiz.length) * 100) >= 80;
+                    speakText(pass ? "Wah, pandainya! Tahniah." : "Jangan putus asa, cuba lagi.");
+                }
+            }, [phase]);
+
+            useEffect(() => {
+                if (phase === 'detail' && activeItem) {
+                    if (module.type === 'letter') speakText(`Huruf ${activeItem.letter}. Sebutannya, ${activeItem.sound}`);
+                    else if (module.type === 'phonics') speakText(`Bunyi ${activeItem.sound}`);
+                    else if (module.type === 'syllable') speakText(`Suku kata, ${activeItem.syllable}`);
+                    else if (module.type === 'number') speakText(`Nombor ${activeItem.text}`);
+                }
+            }, [activeItem, phase]);
+
+            const handleQuizAnswer = (answer) => {
+                const isCorrect = (answer === module.quiz[quizIndex].a);
+                if (isCorrect) {
+                    speakText("Betul!");
+                    setQuizScore(prev => prev + 1);
+                } else {
+                    speakText("Salah.");
+                }
+
+                setTimeout(() => {
+                    if (quizIndex < module.quiz.length - 1) setQuizIndex(prev => prev + 1);
+                    else setPhase('result');
+                }, 1000);
+            };
+
+            return (
+                <div className="w-full min-h-screen p-4 md:p-8 flex flex-col items-center">
+                    {/* Header Modul */}
+                    <div className="w-full max-w-5xl flex justify-between items-center mb-8 bg-white p-4 rounded-[2rem] shadow-lg border-b-4 border-gray-200">
+                        <div className="flex items-center space-x-4">
+                            <button onClick={onExit} className="btn-3d bg-gray-100 p-4 rounded-2xl text-2xl">🚪 Keluar</button>
+                            <h1 className="text-3xl font-bold text-gray-800 ml-4">{module.title}</h1>
+                        </div>
+                    </div>
+
+                    {/* FASA GRID KAD */}
+                    {phase === 'grid' && (
+                        <div className="w-full max-w-5xl animate-pop">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 h-[55vh] overflow-y-auto custom-scrollbar p-2">
+                                {module.content.map((item, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => { setActiveItem(item); setPhase('detail'); }}
+                                        className={`btn-3d ${module.color} text-white rounded-[2rem] aspect-square flex items-center justify-center text-4xl font-black border-4 border-white shadow-md`}
+                                    >
+                                        {item.letter || item.syllable || item.num}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="flex justify-center mt-8">
+                                <button onClick={() => { setQuizScore(0); setQuizIndex(0); setPhase('quiz'); }} className="btn-3d bg-indigo-500 text-white px-12 py-6 rounded-full font-black text-3xl">
+                                    🎮 Mula Kuiz!
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* FASA DETAIL DENGAN GAMBAR & CERITA */}
+                    {phase === 'detail' && activeItem && (
+                        <div className="w-full max-w-4xl animate-pop flex flex-col items-center pb-20">
+                            <button onClick={() => setPhase('grid')} className="btn-3d bg-white px-8 py-4 rounded-full font-bold text-xl mb-6 text-gray-700">⬅️ Kembali</button>
+                            
+                            <div className="bg-white rounded-[3rem] p-10 shadow-2xl border-b-8 border-gray-200 w-full text-center relative">
+                                {/* PAPARAN HURUF / SUKU KATA / NOMBOR BESAR */}
+                                {(module.type === 'letter' || module.type === 'syllable' || module.type === 'phonics') && (
+                                    <h1 className={`text-[8rem] md:text-[10rem] font-black leading-none mb-4 ${module.id === 'm1' ? 'text-rose-500' : module.id === 'm2' ? 'text-cyan-500' : 'text-amber-500'}`}>
+                                        {activeItem.letter || activeItem.syllable}
+                                    </h1>
+                                )}
+                                
+                                {module.type === 'letter' && <div className="text-4xl font-bold text-gray-500">Nama: "{activeItem.sound}"</div>}
+                                
+                                {module.type === 'phonics' && (
+                                    <>
+                                        <div className="text-5xl font-bold text-gray-800 mb-4">"{activeItem.sound}"</div>
+                                        <div className="text-2xl text-gray-500 bg-gray-100 inline-block px-6 py-2 rounded-full border-2 border-gray-200">{activeItem.desc}</div>
+                                    </>
+                                )}
+
+                                {module.type === 'number' && (
+                                    <div className="flex flex-col items-center">
+                                        <h1 className="text-[10rem] font-black text-emerald-500 leading-none mb-4">{activeItem.num}</h1>
+                                        <div className="text-4xl font-bold text-white bg-emerald-500 px-8 py-3 rounded-full uppercase tracking-widest">{activeItem.text}</div>
+                                        
+                                        {/* Ikon Mengira (Gambar Nombor) */}
+                                        {activeItem.num > 0 && (
+                                            <div className="bg-emerald-50 w-full mt-8 p-6 rounded-3xl border-4 border-emerald-100 max-h-[300px] overflow-y-auto custom-scrollbar">
+                                                <div className="flex flex-wrap justify-center gap-3">
+                                                    {[...Array(Math.min(activeItem.num, 100))].map((_, i) => (
+                                                        <div key={i} className="text-4xl animate-pop" style={{animationDelay: `${(i%10)*0.05}s`}}>{activeItem.countImg}</div>
+                                                    ))}
+                                                </div>
+                                                {activeItem.num > 100 && <p className="mt-4 font-bold text-emerald-600">+ banyak lagi!</p>}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* BAHAGIAN GAMBAR (UNTUK HURUF DAN SUKU KATA) - DIKEMBALIKAN */}
+                                {(module.type === 'letter' || module.type === 'syllable') && activeItem.words && (
+                                    <div className="grid grid-cols-2 gap-6 w-full mt-10">
+                                        {activeItem.words.map((word, idx) => (
+                                            <button 
+                                                key={idx} 
+                                                onClick={() => speakText(word.w)} 
+                                                className="btn-3d bg-white p-6 rounded-[2rem] border-4 border-indigo-100 flex flex-col items-center hover:bg-indigo-50"
+                                            >
+                                                <div className="text-[5rem] mb-2">{word.i}</div>
+                                                <div className="text-3xl font-bold text-gray-700 capitalize">{word.w}</div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* BAHAGIAN BUKU CERITA (Hanya untuk Suku Kata) */}
+                                {module.type === 'syllable' && activeItem.story && (
+                                    <div className="mt-10 bg-amber-50 rounded-3xl p-8 border-4 border-amber-200 text-left relative">
+                                        <div className="absolute -top-6 left-8 bg-amber-400 text-white px-6 py-2 rounded-full font-bold text-xl flex items-center shadow-lg">
+                                            📚 Buku Cerita
+                                        </div>
+                                        <p className="text-3xl font-semibold text-gray-800 mt-6 leading-relaxed">
+                                            {activeItem.story}
+                                        </p>
+                                        <button 
+                                            onClick={() => speakText(activeItem.story, 0.75)}
+                                            className="btn-3d mt-6 bg-green-400 text-white px-8 py-4 rounded-2xl font-bold text-2xl w-full flex justify-center items-center gap-3"
+                                        >
+                                            🔊 Tolong Bacakan
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* FASA KUIZ GAMIFIED */}
+                    {phase === 'quiz' && (
+                        <div className="w-full max-w-3xl animate-pop">
+                            {/* Progress Bar */}
+                            <div className="w-full bg-gray-200 rounded-full h-6 mb-8 border-4 border-white shadow-inner">
+                                <div className="bg-green-400 h-full rounded-full transition-all duration-500" style={{ width: `${((quizIndex) / module.quiz.length) * 100}%` }}></div>
+                            </div>
+
+                            <div className="bg-white rounded-[3rem] p-10 shadow-2xl border-b-8 border-indigo-200 text-center">
+                                <h2 className="text-4xl font-bold text-gray-800 mb-12 cursor-pointer" onClick={() => speakText(module.quiz[quizIndex].q)}>
+                                    {module.quiz[quizIndex].q} 🔊
+                                </h2>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    {module.quiz[quizIndex].opt.map((opt, idx) => (
+                                        <button 
+                                            key={idx} 
+                                            onClick={() => handleQuizAnswer(opt)} 
+                                            className="btn-3d bg-indigo-50 hover:bg-indigo-100 border-4 border-indigo-200 rounded-3xl p-8 text-4xl font-black text-indigo-600"
+                                        >
+                                            {opt}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* FASA RESULT (Ada Konfeti) */}
+                    {phase === 'result' && (
+                        <div className="w-full max-w-2xl animate-pop bg-white p-12 rounded-[3rem] shadow-2xl border-b-8 border-green-200 text-center relative overflow-hidden">
+                            {Math.round((quizScore / module.quiz.length) * 100) >= 80 && (
+                                <div className="absolute inset-0 pointer-events-none opacity-50 text-6xl">
+                                    {['🎉','⭐','🎈','✨','🎊'].map((emoji, i) => (
+                                        <div key={i} className="absolute" style={{ left: `${Math.random() * 100}%`, animation: `float-up ${2 + Math.random()*2}s ease-in infinite` }}>{emoji}</div>
+                                    ))}
+                                </div>
+                            )}
+
+                            <div className="text-[8rem] mb-4 animate-bounce-slow relative z-10">
+                                {Math.round((quizScore / module.quiz.length) * 100) >= 80 ? '🏆' : '💪'}
+                            </div>
+                            <h2 className={`text-6xl font-black relative z-10 ${Math.round((quizScore / module.quiz.length) * 100) >= 80 ? 'text-green-500' : 'text-orange-500'}`}>
+                                Markah: {Math.round((quizScore / module.quiz.length) * 100)}%
+                            </h2>
+                            
+                            <div className="flex flex-col gap-4 mt-10 relative z-10">
+                                <button onClick={() => { setQuizScore(0); setQuizIndex(0); setPhase('quiz'); }} className="btn-3d bg-gray-200 text-gray-700 px-12 py-5 rounded-full font-black text-2xl w-full">
+                                    Ulang Kuiz 🔄
+                                </button>
+                                <button onClick={() => { onComplete(Math.round((quizScore / module.quiz.length) * 100)); }} className="btn-3d bg-indigo-500 text-white px-12 py-6 rounded-full font-black text-2xl w-full">
+                                    Kembali ke Peta 🗺️
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // --- APP UTAMA ---
+        const App = () => {
+            const [screen, setScreen] = useState('home');
+            const [activeMod, setActiveMod] = useState(null);
+            const [progress, setProgress] = useState({ 
+                m1: { status: 'unlocked' }, 
+                m2: { status: 'locked' }, 
+                m3: { status: 'locked' },
+                m4: { status: 'locked' } 
+            });
+
+            const startMod = (id) => {
+                if (progress[id].status === 'locked') { speakText("Dikunci! Habiskan yang sebelum ini."); return; }
+                setActiveMod(id); setScreen('lesson');
+            };
+
+            const completeMod = (score) => {
+                if (score >= 80) {
+                    setProgress(prev => {
+                        const next = { ...prev, [activeMod]: { status: 'completed' } };
+                        const idx = MODULE_ORDER.indexOf(activeMod);
+                        if (idx < MODULE_ORDER.length - 1) next[MODULE_ORDER[idx + 1]].status = 'unlocked';
+                        return next;
+                    });
+                }
+                setScreen('home');
+            };
+
+            return (
+                <div className="min-h-screen">
+                    {screen === 'home' && (
+                        <div className="p-4 md:p-8 max-w-6xl mx-auto animate-pop pb-20">
+                            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[3rem] p-10 md:p-12 text-white shadow-2xl mb-12 relative overflow-hidden border-b-8 border-indigo-700">
+                                <h1 className="text-5xl md:text-6xl font-black mb-4">🚀 Smart Start Kids</h1>
+                                <p className="text-2xl md:text-3xl font-medium opacity-90">Peta Pengembaraan Pintar</p>
+                                <div className="absolute -bottom-10 -right-10 text-[10rem] md:text-[12rem] opacity-30">🐻</div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+                                {MODULE_ORDER.map(id => {
+                                    const mod = COURSE_DATA[id];
+                                    const stat = progress[id].status;
+                                    return (
+                                        <div key={id} onClick={() => startMod(id)} 
+                                            className={`btn-3d rounded-[2.5rem] p-8 border-b-8 text-center cursor-pointer flex flex-col items-center justify-center
+                                            ${stat === 'locked' ? 'bg-gray-200 border-gray-300 grayscale opacity-80' : `bg-white ${mod.color.replace('bg-', 'border-')} shadow-xl`}`}
+                                        >
+                                            <div className="text-[6rem] mb-4 filter drop-shadow-md">
+                                                {id === 'm1' ? '🅰️' : id === 'm2' ? '🔊' : id === 'm3' ? '📚' : '🔢'}
+                                            </div>
+                                            <h3 className="text-2xl md:text-3xl font-bold text-gray-800 leading-tight">{mod.title}</h3>
+                                            <div className="mt-6 w-full">
+                                                {stat === 'locked' ? <div className="bg-gray-600 text-white rounded-full py-2 text-xl font-bold">🔒 Terkunci</div> 
+                                                : stat === 'completed' ? <div className="bg-green-500 text-white rounded-full py-2 text-xl font-bold">✅ Selesai</div> 
+                                                : <div className="bg-green-100 text-green-700 border-2 border-green-300 rounded-full py-2 text-xl font-bold">▶️ Mula</div>}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+                    {screen === 'lesson' && <LessonViewer module={COURSE_DATA[activeMod]} onComplete={completeMod} onExit={() => setScreen('home')} />}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
